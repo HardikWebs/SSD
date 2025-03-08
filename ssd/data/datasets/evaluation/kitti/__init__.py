@@ -2,7 +2,6 @@ import os
 import numpy as np
 import torch
 from collections import defaultdict
-from ssd.structures.boxlist import BoxList
 from sklearn.metrics import average_precision_score
 import matplotlib.pyplot as plt
 
@@ -29,6 +28,7 @@ def kitti_evaluation(dataset, predictions, output_dir):
     # Convert model predictions to a format suitable for evaluation
     detections = []
     for prediction in predictions:
+        boxes, labels, scores = prediction['boxes'], prediction['labels'], prediction['scores']
         boxes = prediction.bbox.numpy()  # Predicted boxes (M, 4)
         labels = prediction.get_field("labels").numpy()  # Predicted labels (M,)
         scores = prediction.get_field("scores").numpy()  # Confidence scores (M,)
