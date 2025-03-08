@@ -28,6 +28,7 @@ class MyDataset(torch.utils.data.Dataset):
         # Load image
         image_path = os.path.join(self.image_dir, self.image_files[index])
         image = Image.open(image_path).convert('RGB')
+        image = np.array(image)
 
         # Load annotations (bounding boxes and labels)
         label_path = os.path.join(self.label_dir, self.label_files[index])
