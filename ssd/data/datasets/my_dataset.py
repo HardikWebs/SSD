@@ -58,7 +58,7 @@ class MyDataset(torch.utils.data.Dataset):
                     # KITTI format: [class, truncated, occluded, alpha, bbox_x1, bbox_y1, bbox_x2, bbox_y2, ...]
                     x1, y1, x2, y2 = map(float, parts[4:8])
                     boxes.append([x1, y1, x2, y2])
-                    labels.append(self.class_dict(parts[0]))
+                    labels.append(self.class_dict[parts[0]])
 
         boxes = np.array(boxes, dtype=np.float32)
         labels = np.array(labels, dtype=np.int64)
