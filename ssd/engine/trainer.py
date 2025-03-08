@@ -1,4 +1,4 @@
-import collections
+import collections.abc
 import datetime
 import logging
 import os
@@ -15,7 +15,7 @@ def write_metric(eval_result, prefix, summary_writer, global_step):
     for key in eval_result:
         value = eval_result[key]
         tag = '{}/{}'.format(prefix, key)
-        if isinstance(value, collections.Mapping):
+        if isinstance(value, collections.abc.Mapping):
             write_metric(value, tag, summary_writer, global_step)
         else:
             summary_writer.add_scalar(tag, value, global_step=global_step)
