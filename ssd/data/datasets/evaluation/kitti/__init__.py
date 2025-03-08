@@ -269,7 +269,7 @@ from datetime import datetime
 
 import numpy as np
 
-from voc.eval_detection_voc import eval_detection_voc  # Assuming this function is available
+from .eval_detection_voc import eval_detection_voc  # Assuming this function is available
 
 def kitti_evaluation(dataset, predictions, output_dir, iteration=None):
     """
