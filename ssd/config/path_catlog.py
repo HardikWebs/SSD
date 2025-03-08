@@ -53,11 +53,11 @@ class DatasetCatalog:
             "ann_file": "annotations/instances_val2014.json"
         },
         'my_custom_dataset': {
-            "root": "kaggle/working/kitti_dataset",
+            "root": "kitti_dataset",
             "split": "training"
         },
         'my_custom_test_dataset': {
-            "root": "kaggle/working/kitti_dataset",
+            "root": "kitti_dataset",
             "split": "testing"
         }
     }
