@@ -24,8 +24,8 @@ def kitti_evaluation(dataset, predictions, output_dir, iteration=None):
     ground_truths = []
     for i in range(len(dataset)):
         _, targets, _ = dataset[i]
-        boxes = targets.boxes  # Ground truth boxes (N, 4)
-        labels = targets.labels  # Ground truth labels (N,)
+        boxes = targets["boxes"]
+        labels = targets["labels"]
         ground_truths.append((boxes, labels))
 
     # Convert model predictions to a format suitable for evaluation
