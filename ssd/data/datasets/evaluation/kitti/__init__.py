@@ -318,7 +318,7 @@ def kitti_evaluation(dataset, predictions, output_dir, iteration=None):
         gt_labels=gt_labels_list,
         gt_difficults=None,  # KITTI dataset does not have a 'difficult' flag
         iou_thresh=0.5,
-        use_07_metric=True
+        use_07_metric=False
     )
 
     # Log results
