@@ -52,10 +52,24 @@ class DatasetCatalog:
             "data_dir": "val2014",
             "ann_file": "annotations/instances_val2014.json"
         },
+        'my_custom_dataset': {
+            "root": "kaggle/working/kitti_dataset",
+            "split": "training"
+        },
+        'my_custom_test_dataset': {
+            "root": "kaggle/working/kitti_dataset",
+            "split": "testing"
+        }
     }
 
     @staticmethod
     def get(name):
+        if name == "my_custom_dataset":
+            attrs = DatasetCatalog.DATASETS[name]
+            return dict(factory="MyDataset", args=attrs)
+        if name == "my_custom_test_dataset":
+            attrs = DatasetCatalog.DATASETS[name]
+            return dict(factory="MyDataset", args=attrs)
         if "voc" in name:
             voc_root = DatasetCatalog.DATA_DIR
             if 'VOC_ROOT' in os.environ:
