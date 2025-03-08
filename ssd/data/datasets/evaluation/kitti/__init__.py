@@ -79,7 +79,36 @@ def kitti_evaluation(dataset, predictions, output_dir, iteration=None):
     print(f"Evaluation results saved to {output_dir}")
     return dict(metrics=metrics)
 
-def evaluate_detections(ground_truths, detections, class_names):
+def compute_iou(boxes1, boxes2):
+    """
+    Compute IoU between two sets of boxes.
+    Args:
+        boxes1 (np.array): Shape (N, 4).
+        boxes2 (np.array): Shape (M, 4).
+    Returns:
+        np.array: IoU matrix of shape (N, M).
+    """
+    # Get coordinates of boxes
+    x1 = np.maximum(boxes1[:, None, 0], boxes2[:, 0])
+    y1 = np.maximum(boxes1[:, None, 1], boxes2[:, 1])
+    x2 = np.minimum(boxes1[:, None, 2], boxes2[:, 2])
+    y2 = np.minimum(boxes1[:, None, 3], boxes2[:, 3])
+
+    # Compute intersection area
+    intersection = np.maximum(0, x2 - x1) * np.maximum(0, y2 - y1)
+
+    # Compute areas of boxes
+    area1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
+    area2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
+
+    # Compute union area
+    union = area1[:, None] + area2 - intersection
+
+    # Compute IoU
+    iou = intersection / union
+    return iou
+
+def evaluate_detections(ground_truths, detections, class_names, iou_threshold=0.5):
     """
     Evaluate detections using mean Average Precision (mAP).
 
@@ -87,6 +116,7 @@ def evaluate_detections(ground_truths, detections, class_names):
         ground_truths (list): List of ground truth annotations (boxes, labels).
         detections (list): List of detections (boxes, labels, scores).
         class_names (list): List of class names.
+        iou_threshold (float): IoU threshold for matching predictions to ground truth.
 
     Returns:
         dict: Evaluation results containing mAP, AP per class, precision, and recall.
@@ -105,12 +135,36 @@ def evaluate_detections(ground_truths, detections, class_names):
             gt_boxes, gt_labels = gt
             det_boxes, det_labels, det_scores = det
 
-            # Filter predictions and ground truth for the current class
+            # Filter ground truth and predictions for the current class
             gt_mask = (gt_labels == class_idx)
             det_mask = (det_labels == class_idx)
 
-            y_true.extend(gt_mask.astype(int))
-            y_scores.extend(det_scores[det_mask])
+            gt_boxes_class = gt_boxes[gt_mask]
+            det_boxes_class = det_boxes[det_mask]
+            det_scores_class = det_scores[det_mask]
+
+            # Initialize true positives and false positives
+            tp = np.zeros(len(det_scores_class))
+            fp = np.zeros(len(det_scores_class))
+
+            if len(gt_boxes_class) == 0:
+                # No ground truth for this class, all predictions are false positives
+                fp[:] = 1
+            else:
+                # Compute IoU between predicted and ground truth boxes
+                iou = compute_iou(det_boxes_class, gt_boxes_class)
+
+                # Match predictions to ground truth
+                for i in range(len(det_scores_class)):
+                    max_iou = np.max(iou[i])
+                    if max_iou >= iou_threshold:
+                        tp[i] = 1
+                    else:
+                        fp[i] = 1
+
+            # Accumulate true positives and scores
+            y_true.extend(tp)
+            y_scores.extend(det_scores_class)
 
         if len(y_true) > 0 and len(y_scores) > 0:
             # Compute precision, recall, and AP
