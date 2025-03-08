@@ -2,10 +2,13 @@ import os
 import numpy as np
 import torch
 from collections import defaultdict
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import average_precision_score, precision_recall_curve
 import matplotlib.pyplot as plt
+from datetime import datetime
+import logging
 
-def kitti_evaluation(dataset, predictions, output_dir):
+
+def kitti_evaluation(dataset, predictions, output_dir, iteration=None):
     """
     Evaluate the SSD model on the KITTI dataset.
 
@@ -29,36 +32,52 @@ def kitti_evaluation(dataset, predictions, output_dir):
     detections = []
     for prediction in predictions:
         boxes, labels, scores = prediction['boxes'], prediction['labels'], prediction['scores']
-        boxes = prediction.bbox.numpy()  # Predicted boxes (M, 4)
-        labels = prediction.get_field("labels").numpy()  # Predicted labels (M,)
-        scores = prediction.get_field("scores").numpy()  # Confidence scores (M,)
+        # boxes = prediction.bbox.numpy()  # Predicted boxes (M, 4)
+        # labels = prediction.get_field("labels").numpy()  # Predicted labels (M,)
+        # scores = prediction.get_field("scores").numpy()  # Confidence scores (M,)
         detections.append((boxes, labels, scores))
 
     # Evaluate detections using mean Average Precision (mAP)
     results = evaluate_detections(ground_truths, detections, dataset.class_names)
 
-    # Save evaluation results to a file
-    result_file = os.path.join(output_dir, "evaluation_results.txt")
-    with open(result_file, "w") as f:
-        for class_name, metrics in results.items():
-            f.write(f"Class: {class_name}\n")
-            f.write(f"Precision: {metrics['precision']:.4f}\n")
-            f.write(f"Recall: {metrics['recall']:.4f}\n")
-            f.write(f"AP: {metrics['ap']:.4f}\n")
-            f.write("\n")
+    # Format results
+    result_str = ""
+    metrics = {"mAP": results["map"]}
+    for i, ap in enumerate(results["ap"]):
+        if i == 0:  # Skip background
+            continue
+        class_name = dataset.class_names[i]
+        metrics[class_name] = ap
+        result_str += "{:<16}: {:.4f}\n".format(class_name, ap)
+
+    # Log results
+    logger = logging.getLogger("SSD.inference")
+    logger.info(result_str)
+
+    # Save results to a file
+    if iteration is not None:
+        result_path = os.path.join(output_dir, "result_{:07d}.txt".format(iteration))
+    else:
+        result_path = os.path.join(output_dir, "result_{}.txt".format(datetime.now().strftime("%Y-%m-%d_%H-%M-%S")))
+    with open(result_path, "w") as f:
+        f.write(result_str)
 
     # Save visualization of detections for a few samples
     visualize_dir = os.path.join(output_dir, "visualizations")
     os.makedirs(visualize_dir, exist_ok=True)
     for i in range(min(10, len(dataset))):  # Visualize first 10 samples
-        image, targets, _ = dataset[i]
-        pred_boxes, pred_labels, pred_scores = detections[i]
+        image, targets, image_id = dataset[i]
+        if image_id in predictions:
+            pred_boxes, pred_labels, pred_scores = detections[i]
+        else:
+            pred_boxes, pred_labels, pred_scores = np.zeros((0, 4)), np.zeros((0,)), np.zeros((0,))
         save_detection_results(
             image, targets.boxes, targets.labels, pred_boxes, pred_labels, pred_scores,
             dataset.class_names, os.path.join(visualize_dir, f"sample_{i}.png")
         )
 
     print(f"Evaluation results saved to {output_dir}")
+    return dict(metrics=metrics)
 
 def evaluate_detections(ground_truths, detections, class_names):
     """
@@ -70,9 +89,10 @@ def evaluate_detections(ground_truths, detections, class_names):
         class_names (list): List of class names.
 
     Returns:
-        dict: Evaluation results for each class.
+        dict: Evaluation results containing mAP, AP per class, precision, and recall.
     """
     results = defaultdict(lambda: {"precision": 0.0, "recall": 0.0, "ap": 0.0})
+    aps = []
 
     for class_idx, class_name in enumerate(class_names):
         if class_name == "__background__":
@@ -93,8 +113,23 @@ def evaluate_detections(ground_truths, detections, class_names):
             y_scores.extend(det_scores[det_mask])
 
         if len(y_true) > 0 and len(y_scores) > 0:
+            # Compute precision, recall, and AP
+            precision, recall, _ = precision_recall_curve(y_true, y_scores)
             ap = average_precision_score(y_true, y_scores)
+
+            # Store results
+            results[class_name]["precision"] = precision.mean()
+            results[class_name]["recall"] = recall.mean()
             results[class_name]["ap"] = ap
+            aps.append(ap)
+        else:
+            # If no predictions or ground truth for this class, set AP to 0
+            results[class_name]["ap"] = 0.0
+            aps.append(0.0)
+
+    # Compute mean Average Precision (mAP)
+    results["map"] = np.mean(aps) if aps else 0.0
+    results["ap"] = aps  # Store APs for each class
 
     return results
 
