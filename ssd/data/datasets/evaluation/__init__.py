@@ -1,6 +1,7 @@
 from ssd.data.datasets import VOCDataset, COCODataset
 from .coco import coco_evaluation
 from .voc import voc_evaluation
+from .kitti import kitti_evaluation
 
 
 def evaluate(dataset, predictions, output_dir, **kwargs):
@@ -21,4 +22,4 @@ def evaluate(dataset, predictions, output_dir, **kwargs):
     elif isinstance(dataset, COCODataset):
         return coco_evaluation(**args)
     else:
-        raise NotImplementedError
+        return kitti_evaluation(**args)
