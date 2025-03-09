@@ -18,13 +18,13 @@ class BatchCollator:
         img_ids = default_collate(transposed_batch[2])
 
         list_targets = transposed_batch[1]
-        print('is_train', self.is_train)
-        print('len(list_targets)', len(list_targets))
-        for target in list_targets:
-            print(len(target["boxes"]))
-            print(len(target["labels"]))
+        # print('is_train', self.is_train)
+        # print('len(list_targets)', len(list_targets))
+        # for target in list_targets:
+        #     print(len(target["boxes"]))
+        #     print(len(target["labels"]))
 
-        print('list_targets', list_targets)
+        # print('list_targets', list_targets)
         targets = Container(
             {key: default_collate([d[key] for d in list_targets]) for key in list_targets[0]}
         )
@@ -64,13 +64,17 @@ def make_data_loader(cfg, is_train=True, distributed=False, max_iter=None, start
     shuffle = is_train
 
     data_loaders = []
+    print('is_train', is_train)
 
     for dataset in datasets:
         if distributed:
+            print('distributed')
             sampler = samplers.DistributedSampler(dataset, shuffle=shuffle)
         elif shuffle:
+            print('shuffle')
             sampler = torch.utils.data.RandomSampler(dataset)
         else:
+            print('sequential sampler')
             sampler = torch.utils.data.sampler.SequentialSampler(dataset)
 
         batch_size = cfg.SOLVER.BATCH_SIZE
