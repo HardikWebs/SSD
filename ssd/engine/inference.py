@@ -36,7 +36,7 @@ def _accumulate_predictions_from_multiple_gpus(predictions_per_gpu):
 
 def compute_on_dataset(model, data_loader, device):
     results_dict = {}
-    for batch in data_loader:
+    for i, batch in enumerate(data_loader):
         images, targets, image_ids = batch
         cpu_device = torch.device("cpu")
         with torch.no_grad():
