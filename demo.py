@@ -5,6 +5,7 @@ import time
 import torch
 from PIL import Image
 # from vizer.draw import draw_boxes
+from PIL import Image, ImageDraw, ImageFont
 
 from ssd.config import cfg
 from ssd.data.datasets import COCODataset, VOCDataset
