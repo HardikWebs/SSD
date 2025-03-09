@@ -48,6 +48,19 @@ class MyDataset(torch.utils.data.Dataset):
 
         # Return image, targets, and index
         return image, targets, index
+    
+    def get_image_dimensions(self, index):
+        """
+        Returns the width and height of the image at the specified index.
+        Args:
+            index (int): Index of the image in the dataset.
+        Returns:
+            tuple: (width, height) of the image.
+        """
+        image_path = os.path.join(self.image_dir, self.image_files[index])
+        with Image.open(image_path) as img:
+            width, height = img.size
+        return width, height
 
     def _parse_kitti_annotations(self, label_path):
         boxes = []

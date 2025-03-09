@@ -302,7 +302,8 @@ def kitti_evaluation(dataset, predictions, output_dir, iteration=None):
 
         # Get predictions
         prediction = predictions[i]
-        prediction = prediction.resize((image.shape[1], image.shape[0])).numpy()  # Resize to image dimensions
+        width, height = dataset.get_image_dimensions(i)
+        prediction = prediction.resize(width, height).numpy()  # Resize to image dimensions
         boxes, labels, scores = prediction["boxes"], prediction["labels"], prediction["scores"]
 
         pred_boxes_list.append(boxes)
