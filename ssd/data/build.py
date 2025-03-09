@@ -18,6 +18,9 @@ class BatchCollator:
         img_ids = default_collate(transposed_batch[2])
 
         list_targets = transposed_batch[1]
+        print('is_train', self.is_train)
+        print('type(list_targets)', type(list_targets))
+        print('list_targets', list_targets)
         targets = Container(
             {key: default_collate([d[key] for d in list_targets]) for key in list_targets[0]}
         )
