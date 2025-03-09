@@ -17,13 +17,10 @@ class BatchCollator:
         images = default_collate(transposed_batch[0])
         img_ids = default_collate(transposed_batch[2])
 
-        if self.is_train:
-            list_targets = transposed_batch[1]
-            targets = Container(
-                {key: default_collate([d[key] for d in list_targets]) for key in list_targets[0]}
-            )
-        else:
-            targets = None
+        list_targets = transposed_batch[1]
+        targets = Container(
+            {key: default_collate([d[key] for d in list_targets]) for key in list_targets[0]}
+        )
         return images, targets, img_ids
 
 
