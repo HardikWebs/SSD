@@ -8,9 +8,27 @@ from ssd.data.transforms import build_transforms, build_target_transform
 from ssd.structures.container import Container
 
 
+# class BatchCollator:
+#     def __init__(self, is_train=True):
+#         self.is_train = is_train
+
+#     def __call__(self, batch):
+#         transposed_batch = list(zip(*batch))
+#         images = default_collate(transposed_batch[0])
+#         img_ids = default_collate(transposed_batch[2])
+
+#         list_targets = transposed_batch[1]
+#         targets = Container(
+#             {key: default_collate([d[key] for d in list_targets]) for key in list_targets[0]}
+#         )
+#         return images, targets, img_ids
+
+from torch.nn.utils.rnn import pad_sequence
+
 class BatchCollator:
-    def __init__(self, is_train=True):
+    def __init__(self, is_train=True, max_boxes=100):
         self.is_train = is_train
+        self.max_boxes = max_boxes  # Maximum number of bounding boxes per image
 
     def __call__(self, batch):
         transposed_batch = list(zip(*batch))
@@ -18,9 +36,15 @@ class BatchCollator:
         img_ids = default_collate(transposed_batch[2])
 
         list_targets = transposed_batch[1]
-        targets = Container(
-            {key: default_collate([d[key] for d in list_targets]) for key in list_targets[0]}
-        )
+        targets = {}
+        for key in list_targets[0]:
+            # Pad sequences to the same length
+            padded_boxes = pad_sequence([d[key] for d in list_targets], batch_first=True)
+            # Ensure the number of boxes does not exceed max_boxes
+            if padded_boxes.size(1) > self.max_boxes:
+                padded_boxes = padded_boxes[:, :self.max_boxes, :]
+            targets[key] = padded_boxes
+        targets = Container(targets)
         return images, targets, img_ids
 
 
