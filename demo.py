@@ -4,7 +4,7 @@ import time
 
 import torch
 from PIL import Image
-from vizer.draw import draw_boxes
+# from vizer.draw import draw_boxes
 
 from ssd.config import cfg
 from ssd.data.datasets import COCODataset, VOCDataset
@@ -15,6 +15,54 @@ from ssd.data.transforms import build_transforms
 from ssd.modeling.detector import build_detection_model
 from ssd.utils import mkdir
 from ssd.utils.checkpoint import CheckPointer
+
+def draw_bboxes(image, boxes, labels, scores, class_names, font_path=None, font_size=12):
+    """
+    Draw bounding boxes, labels, and scores on an image.
+
+    Args:
+        image (numpy.ndarray): Input image as a numpy array.
+        boxes (numpy.ndarray): Bounding boxes in format [[xmin, ymin, xmax, ymax], ...].
+        labels (numpy.ndarray): Class labels for each bounding box.
+        scores (numpy.ndarray): Confidence scores for each bounding box.
+        class_names (list): List of class names corresponding to the labels.
+        font_path (str, optional): Path to a .ttf font file. If None, uses the default font.
+        font_size (int, optional): Font size for the text.
+
+    Returns:
+        numpy.ndarray: Image with drawn boxes and labels.
+    """
+    # Convert the numpy array image to a PIL image
+    pil_image = Image.fromarray(image)
+    draw = ImageDraw.Draw(pil_image)
+
+    # Load a font
+    try:
+        font = ImageFont.truetype(font_path, font_size) if font_path else ImageFont.load_default()
+    except IOError:
+        font = ImageFont.load_default()  # Fallback to default font if the specified font is not found
+
+    for box, label, score in zip(boxes, labels, scores):
+        xmin, ymin, xmax, ymax = box
+        class_name = class_names[label]
+        display_str = f"{class_name}: {score:.2f}"
+
+        # Draw the bounding box
+        draw.rectangle([(xmin, ymin), (xmax, ymax)], outline="red", width=2)
+
+        # Draw the label and score
+        text_bbox = draw.textbbox((xmin, ymin), display_str, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_height = text_bbox[3] - text_bbox[1]
+
+        # Draw a background rectangle for the text
+        draw.rectangle([(xmin, ymin - text_height), (xmin + text_width, ymin)], fill="red")
+
+        # Draw the text
+        draw.text((xmin, ymin - text_height), display_str, fill="white", font=font)
+
+    # Convert the PIL image back to a numpy array
+    return np.array(pil_image)
 
 
 @torch.no_grad()
@@ -70,7 +118,7 @@ def run_demo(cfg, ckpt, score_threshold, images_dir, output_dir, dataset_type):
         )
         print('({:04d}/{:04d}) {}: {}'.format(i + 1, len(image_paths), image_name, meters))
 
-        drawn_image = draw_boxes(image, boxes, labels, scores, class_names).astype(np.uint8)
+        drawn_image = draw_bboxes(image, boxes, labels, scores, class_names).astype(np.uint8)
         Image.fromarray(drawn_image).save(os.path.join(output_dir, image_name))
 
 
