@@ -76,8 +76,8 @@ def do_train(cfg, model,
     for iteration, (images, targets, _) in enumerate(data_loader, start_iter):
         iteration = iteration + 1
         arguments["iteration"] = iteration
-        print('images ', images)
-        print('targets ', targets)
+        # print('images ', images)
+        # print('targets ', targets)
 
         images = images.to(device)
         targets = targets.to(device)
