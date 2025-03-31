@@ -10,7 +10,7 @@ DATASETS:
   TEST: ("my_custom_test_dataset", )
 SOLVER:
   # MAX_ITER: 160000, 30000
-  MAX_ITER: 30000
+  MAX_ITER: 1
   LR_STEPS: [105000, 135000]
   GAMMA: 0.1
   BATCH_SIZE: 24
