@@ -1,0 +1,6 @@
+mAP: 0.1963
+Car             : 0.5303
+Van             : 0.1132
+Truck           : 0.1802
+Pedestrian      : 0.1021
+Cyclist         : 0.0559

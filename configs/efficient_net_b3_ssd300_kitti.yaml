@@ -1,19 +1,19 @@
-MODEL:
-  NUM_CLASSES: 6
-  BACKBONE:
-    NAME: 'efficient_net-b3'
-    OUT_CHANNELS: (48, 136, 384, 256, 256, 256)
+DATASETS:
+  TEST: ("my_custom_test_dataset", )
+  TRAIN: ("my_custom_dataset", )
 INPUT:
   IMAGE_SIZE: 300
-DATASETS:
-  TRAIN: ("my_custom_dataset", )
-  TEST: ("my_custom_test_dataset", )
+MODEL:
+  BACKBONE:
+    NAME: efficient_net-b3
+    OUT_CHANNELS: (48, 136, 384, 256, 256, 256)
+  NUM_CLASSES: 6
+OUTPUT_DIR: outputs/efficient_net_b3_ssd300_kitti
 SOLVER:
-  # MAX_ITER: 160000, 30000
-  MAX_ITER: 30000
-  LR_STEPS: [105000, 135000]
-  GAMMA: 0.1
   BATCH_SIZE: 24
+  GAMMA: 0.1
   LR: 1e-3
-
-OUTPUT_DIR: 'outputs/efficient_net_b3_ssd300_kitti'
+  LR_STEPS:
+  - 105000
+  - 135000
+  MAX_ITER: 180000
